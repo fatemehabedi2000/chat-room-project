@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="messages" id="messages">
+        {% for message in messages %}
+            {% set align_class = "align-right" if message['username'] == current_user else "align-left" %}
+            <div class="message {{ align_class }}" data-id="{{ message['id'] }}">
+                <div class="message-bubble">
+                    <div class="message-header">
+                        <span class="username">{{ message['username'] }}</span>
+                        <span class="timestamp">{{ message['timestamp'] }}</span>
+                        {% if message['username'] == current_user %}
+                        <div class="message-actions">
+                            <button class="edit-btn" title="Edit">✏️</button>
+                            <button class="delete-btn" title="Delete">🗑️</button>
+                        </div>
+                        {% end %}
+                    </div>
+                    <div class="message-content">{{ message['content'] }}</div>
+                </div>
+            </div>
+        {% end %}
+    </div>
+    
+    <div class="message-form">
+        <textarea id="message-input" placeholder="Type your message here..."></textarea>
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+    const currentUser = "{{ current_user }}";
+</script>
+{% end %}
