@@ -4,6 +4,7 @@ import tornado.web
 import tornado.ioloop 
 import tornado.websocket
 from datetime import datetime
+from tornado.escape import xhtml_escape
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -125,7 +126,7 @@ class MessageHandler(BaseHandler):
     @tornado.web.authenticated
     async def post(self):
         try:
-            content = self.get_argument("content")
+            content = xhtml_escape(self.get_argument("content"))
             DB = self.get_db()
             user = DB.authenticate_user(self.current_user.decode("utf-8"), "")[0]
             DB.save_message(user, content)
@@ -145,7 +146,7 @@ class MessageHandler(BaseHandler):
     @tornado.web.authenticated
     async def put(self, message_id):
         try:
-            new_content = self.get_argument("new_content")
+            new_content = xhtml_escape(self.get_argument("new_content"))
             DB = self.get_db()
             username = self.current_user.decode("utf-8")
             user_id = DB.get_user(username)[0][0]
@@ -195,6 +196,7 @@ class WebSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
             self.close()
 
     async def on_message(self, message):
+        message = xhtml_escape(message)
         try:
             username = self.get_secure_cookie("user").decode('utf-8')
             
