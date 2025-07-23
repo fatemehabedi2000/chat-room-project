@@ -1,35 +1,118 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="chat-container">
-    <div class="messages" id="messages">
+<div class="app-container">
+    <header class="app-header">
+        <h1 class="app-title">Chat App</h1>
+        <div class="user-info">
+            <span class="current-user">Hello, {{ current_user }}</span>
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+    </header>
+
+    <div class="messages-container" id="messages">
         {% for message in messages %}
-            {% set align_class = "align-right" if message['username'] == current_user else "align-left" %}
-            <div class="message {{ align_class }}" data-id="{{ message['id'] }}">
-                <div class="message-bubble">
-                    <div class="message-header">
-                        <span class="username">{{ message['username'] }}</span>
-                        <span class="timestamp">{{ message['timestamp'] }}</span>
-                        {% if message['username'] == current_user %}
-                        <div class="message-actions">
-                            <button class="edit-btn" title="Edit">✏️</button>
-                            <button class="delete-btn" title="Delete">🗑️</button>
-                        </div>
-                        {% end %}
-                    </div>
-                    <div class="message-content">{{ message['content'] }}</div>
+        <div class="message {% if message['username'] == current_user %}message-right{% else %}message-left{% end %}" 
+             data-id="{{ message['id'] }}"
+             data-user="{{ message['username'] }}">
+            <div class="message-header">
+                <span class="message-user">{{ message['username'] }}</span>
+                <span class="message-time">{{ message['timestamp'] }}</span>
+                {% if message['username'] == current_user %}
+                <div class="message-actions">
+                    <button class="message-action edit-btn" aria-label="Edit message">✏️</button>
+                    <button class="message-action delete-btn" aria-label="Delete message">🗑️</button>
                 </div>
+                {% end %}
             </div>
+            <div class="message-content">{{ message['content'] }}</div>
+            
+            {% if message.get('has_attachment') %}
+            <div class="attachment" data-type="{{ message['attachment']['mime_type'].split('/')[0] }}">
+                <a href="/attachments/{{ message['attachment']['id'] }}" 
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   download="{{ message['attachment']['file_name'] }}">
+                    {% if message['attachment']['mime_type'].startswith('image/') %}
+                    <div class="attachment-preview">
+                        <img src="/attachments/{{ message['attachment']['id'] }}" 
+                             alt="{{ message['attachment']['file_name'] }}"
+                             loading="lazy">
+                    </div>
+                    {% elif message['attachment']['mime_type'].startswith('video/') %}
+                    <video controls preload="metadata">
+                        <source src="/attachments/{{ message['attachment']['id'] }}" 
+                                type="{{ message['attachment']['mime_type'] }}">
+                        Your browser doesn't support video
+                    </video>
+                    {% elif message['attachment']['mime_type'].startswith('audio/') %}
+                    <audio controls preload="metadata">
+                        <source src="/attachments/{{ message['attachment']['id'] }}" 
+                                type="{{ message['attachment']['mime_type'] }}">
+                        Your browser doesn't support audio
+                    </audio>
+                    {% else %}
+                    <div class="file-icon">
+                        {% if message['attachment']['mime_type'] == 'application/pdf' %}
+                        📄
+                        {% else %}
+                        📎
+                        {% end %}
+                        <span>{{ message['attachment']['file_name'] }}</span>
+                    </div>
+                    {% end %}
+                    <span class="file-size">({{ (message['attachment']['file_size'] / 1024)|round(1) }} KB)</span>
+                </a>
+            </div>
+            {% end %}
+        </div>
         {% end %}
     </div>
     
-    <div class="message-form">
-        <textarea id="message-input" placeholder="Type your message here..."></textarea>
-        <button id="send-btn">Send</button>
-    </div>
+    <form id="message-form" class="message-form" enctype="multipart/form-data" aria-label="Send message">
+        <div class="input-group">
+            <textarea id="message-input" 
+                      name="content" 
+                      class="message-input"
+                      placeholder="Type your message here..." 
+                      rows="1"
+                      aria-label="Message input"></textarea>
+            
+            <label for="file-input" class="file-upload-label" title="Attach file" aria-label="Attach file">
+                📎
+                <input type="file" 
+                       id="file-input" 
+                       name="attachment" 
+                       accept="image/*,video/*,audio/*,.pdf,.txt"
+                       aria-label="File attachment">
+            </label>
+            
+            <button type="button" id="remove-file-btn" class="message-action remove-file-btn" aria-label="Remove attachment">✖</button>
+            
+            <button type="submit" id="send-btn" class="send-button" aria-label="Send message">
+                <span class="btn-text">Send</span>
+                <span class="spinner" aria-hidden="true"></span>
+            </button>
+        </div>
+        <div id="file-preview" class="file-preview" aria-live="polite"></div>
+    </form>
 </div>
 
-<script>
-    const currentUser = "{{ current_user }}";
-</script>
+<!-- SVG Sprite for icons -->
+<svg style="display: none;">
+    <symbol id="icon-attachment" viewBox="0 0 24 24">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+    </symbol>
+</svg>
+
+<!-- Data attributes for JS configuration -->
+<div id="app-data" 
+     data-current-user="{{ current_user }}"
+     data-max-file-size="52428800" 
+     data-allowed-types="image/*,video/*,audio/*,.pdf,.txt">
+</div>
+
+{% block scripts %}
+<script src="/static/script.js"></script>
+{% end %}
 {% end %}
