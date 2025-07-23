@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Chat App{% end %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    {% block body %}
-    <header>
-        <!-- content -->
-    </header>
-    <main>
-        {% block content %}{% end %}
-    </main>
-    {% end %}
-    <script src="/static/script.js"></script>
+    <div class="app-container">
+        {% block header %}{% end %}
+        
+        <main>
+            {% block content %}{% end %}
+        </main>
+        
+        {% block footer %}{% end %}
+    </div>
+    
+    {% block scripts %}{% end %}
 </body>
 </html>
